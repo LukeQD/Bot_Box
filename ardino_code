@@ -1,0 +1,56 @@
+//This code moves the motor between 0 degrees and 180 degrees at a constant speed and accel
+
+
+#include <AccelStepper.h>
+
+
+//Defining pins
+int Stepper2Pulse = 2;
+int Stepper2Direction = 3;
+int speedpot = A0;   // Potentiometer
+int positionpot = A1;
+
+
+//defining terms
+
+
+int Motor_start_position = 0;
+bool incoming_pos_rec = false;
+
+int speedmin = 0; //pulses per second
+int speedmax = 4000;  //pulses per second
+int positionmax = 1600;
+int incomingByte;
+AccelStepper step2(1, Stepper2Pulse, Stepper2Direction);
+
+
+void setup() {               
+  //setup serial input:
+  Serial.begin(9600);
+  step2.setMaxSpeed (1000);  
+  step2.setSpeed(100);// steps per second WTF!
+  step2.setAcceleration(100);//steps per second squared
+  
+  pinMode(Stepper2Pulse, OUTPUT);
+  pinMode(Stepper2Direction, OUTPUT);
+  
+  digitalWrite(Stepper2Pulse, LOW);
+  digitalWrite(Stepper2Direction, HIGH);
+  step2.moveTo(Motor_start_position);
+  Serial.print("Restarting");
+
+}
+
+void loop() {
+  step2.run();// Moves motor to pos if not already at pos
+  if (Serial.available())
+    {
+    String a = Serial.readString();
+    int incomingByte = a.toInt();
+    step2.moveTo(incomingByte);
+    incoming_pos_rec = true;
+    
+
+    
+  }
+  

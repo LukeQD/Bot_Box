@@ -37,7 +37,7 @@ class serial_connection():
         try:
             self.ser.write(value.encode('utf_8'))
             self.ser.flush()
-            print(f"{value} was sent via serial connection")
+            #print(f"{value} was sent via serial connection")
         except serial.SerialException as e:
             # Handle the exception (COM4 not available)
             print(f"Error in sending R: {e}")
