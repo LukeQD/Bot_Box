@@ -20,11 +20,23 @@ class degree_setter_widget(QWidget):
         toggle_hbox.addWidget(self.degree_button)
         toggle_hbox.addWidget(self.steps_button)
 
-        # Create line edit and label for input
-        terminal_hbox = QHBoxLayout()
-        terminal_hbox.addWidget(QLabel("Pos"))
-        self.terminal = QLineEdit()
-        terminal_hbox.addWidget(self.terminal)
+        # Create line edit and label for arm pos
+        arm_terminal_hbox = QHBoxLayout()
+        arm_terminal_hbox.addWidget(QLabel("Arm Pos"))
+        self.arm_terminal = QLineEdit()
+        arm_terminal_hbox.addWidget(self.arm_terminal)
+
+        # Create line edit and label for base pos
+        base_terminal_hbox = QHBoxLayout()
+        base_terminal_hbox.addWidget(QLabel("Base"))
+        self.base_terminal = QLineEdit()
+        base_terminal_hbox.addWidget(self.base_terminal)
+
+        # Create line edit and label for wrist pos
+        wrist_terminal_hbox = QHBoxLayout()
+        wrist_terminal_hbox.addWidget(QLabel("wrist"))
+        self.wrist_terminal = QLineEdit()
+        wrist_terminal_hbox.addWidget(self.wrist_terminal)
 
         # Create "send" button and connect it to send_data
         send_hbox = QHBoxLayout()
@@ -32,27 +44,58 @@ class degree_setter_widget(QWidget):
         send.pressed.connect(self.send_data)
         send_hbox.addWidget(send)
         
+        #create fire button:
+        fire_hbox = QHBoxLayout()
+        fire = QPushButton("Fire")
+        fire.pressed.connect(self.fire)
+        fire_hbox.addWidget(fire)
+
         # Add all layouts to main vertical layout
         main_vbox.addLayout(toggle_hbox)
-        main_vbox.addLayout(terminal_hbox)
+        main_vbox.addLayout(arm_terminal_hbox)
+        main_vbox.addLayout(base_terminal_hbox)
+        main_vbox.addLayout(wrist_terminal_hbox)
         main_vbox.addLayout(send_hbox)
+        main_vbox.addLayout(fire_hbox)
 
         self.setLayout(main_vbox)
+
+    def fire(self):
+        self.connection.send_value("fire")
+        print("fire")
+
 
     def send_data(self):
         """
         Sends the specified value in steps to the serial connection, and updates the line edit to show the true sent value.
         """
-        value = float(self.terminal.text())
+        #get arm and base pos from terminal
+        arm_pos = float(self.arm_terminal.text())*2.5
         if self.degree_button.isChecked():
-            value /= 1.8  # Convert degrees to steps before sending
+            arm_pos /= 1.8  # Convert degrees to steps before sending
+        arm_pos = round(arm_pos)
 
-        value = round(value)  # Round steps to nearest int
-        self.connection.send_value(str(value))  # Send number of steps to serial connection
+        base_pos = float(self.base_terminal.text())*4.5
+        if self.degree_button.isChecked():
+            base_pos /= 1.8
+        base_pos = round(base_pos)
+
+        wrist_pos = round(float(self.wrist_terminal.text()))
+
+
+        #create pos string and send it
+        pos_string = str(arm_pos) + "B" + str(base_pos) +"W" + str(wrist_pos)
+        print(pos_string)
+        self.connection.send_value(pos_string)  # Send number of steps to serial connection
 
         # Update the lineedit to show the true value
-        display_value = value * 1.8 if self.degree_button.isChecked() else value
-        self.terminal.setText(str(display_value))
+        arm_display_value = (arm_pos * 1.8)/2.5 if self.degree_button.isChecked() else arm_pos
+        self.arm_terminal.setText(str(arm_display_value))
+        base_display_value = (base_pos * 1.8)/4.5 if self.degree_button.isChecked() else base_pos
+        self.base_terminal.setText(str(base_display_value))
+        
+
+
 
     def send_cycle(self):
         """
