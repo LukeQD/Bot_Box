@@ -1,59 +1,75 @@
-import sys
-from PySide6.QtWidgets import QApplication, QWidget, QMainWindow, QHBoxLayout, QVBoxLayout,QPushButton
-from PySide6.QtGui import QPainter, QColor
-from PySide6.QtCore import Qt, QRect
+from PySide6.QtWidgets import QApplication, QWidget
+from PySide6.QtGui import QPainter, QPen
+from PySide6.QtCore import Qt, QPointF
+import math
 
-class RectangleWidget(QWidget):
+class RobotArmWidget(QWidget):
     def __init__(self):
         super().__init__()
+        self.setWindowTitle("Robot Arm Control")
+        self.setGeometry(100, 100, 600, 400)
+
+        # Initial configuration
+        self.link1_length = 150
+        self.link2_length = 100
+        self.angle1 = 0  # Angle of link1 in degrees
+        self.angle2 = 0  # Angle of link2 in degrees
+
+        self.base = QPointF(300, 300)  # Base position (P0)
+        self.joint1 = self.calculate_joint(self.base, self.link1_length, self.angle1)
+        self.joint2 = self.calculate_joint(self.joint1, self.link2_length, self.angle2)
+
+        self.Joints = "j2"  # Can be "j1" or "j2"
+        self.dragging = False
+
+    def calculate_joint(self, origin, length, angle):
+        """Calculate the endpoint of a link based on origin, length, and angle."""
+        rad_angle = math.radians(angle)
+        x = origin.x() + length * math.cos(rad_angle)
+        y = origin.y() - length * math.sin(rad_angle)
+        return QPointF(x, y)
 
     def paintEvent(self, event):
+        """Draw the robot arm."""
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
-        painter.setBrush(QColor(100, 100, 255))  # Set color for the rectangle
+        pen = QPen(Qt.black, 3)
+        painter.setPen(pen)
 
-        # Get the widget's dimensions
-        widget_width = self.width()
-        widget_height = self.height()
+        # Draw links
+        self.joint1 = self.calculate_joint(self.base, self.link1_length, self.angle1)
+        self.joint2 = self.calculate_joint(self.joint1, self.link2_length, self.angle2)
+        painter.drawLine(self.base, self.joint1)
+        painter.drawLine(self.joint1, self.joint2)
+        painter.end()
 
-        # Define the size of the rectangle
-        rect_width = widget_width // 2
-        rect_height = widget_height // 2
+    def mousePressEvent(self, event):
+        """Start dragging based on the active joint."""
+        mouse_pos = event.pos()
+        self.dragging = True
 
-        # Calculate the top-left corner of the rectangle to center it
-        x = (widget_width - rect_width) // 2
-        y = (widget_height - rect_height) // 2
+    def mouseMoveEvent(self, event):
+        """Update the angle of the active joint while dragging."""
+        mouse_pos = event.pos()
+        if self.dragging:
+            if self.Joints == "j1":
+                self.angle1 = self.calculate_angle(self.base, mouse_pos)
+            elif self.Joints == "j2":
+                self.angle2 = self.calculate_angle(self.joint1, mouse_pos)
+            self.update()
 
-        # Draw the rectangle
-        painter.drawRect(QRect(x, y, rect_width, rect_height))
+    def mouseReleaseEvent(self, event):
+        """Stop dragging."""
+        self.dragging = False
 
-class MainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Main Window with Rectangle")
+    def calculate_angle(self, origin, target):
+        """Calculate the angle between the origin and the target in degrees."""
+        dx = target.x() - origin.x()
+        dy = origin.y() - target.y()
+        return math.degrees(math.atan2(dy, dx))
 
-        # Create a central widget
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-
-        # Create a layout
-        hbox_layout = QHBoxLayout()
-        button = QPushButton("YES")
-        # Create an instance of RectangleWidget
-        rectangle_widget = RectangleWidget()
-
-        # Add the rectangle widget to the layout
-        hbox_layout.addWidget(button)
-        hbox_layout.addWidget(rectangle_widget)
-
-        # Set the layout to the central widget
-        central_widget.setLayout(hbox_layout)
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
-
-    main_window = MainWindow()
-    main_window.resize(600, 400)  # Set the initial size of the main window
-    main_window.show()
-
-    sys.exit(app.exec())
+    app = QApplication([])
+    widget = RobotArmWidget()
+    widget.show()
+    app.exec()
