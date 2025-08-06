@@ -54,11 +54,14 @@ onMounted(() => {
       y: { auto: true },
     },
     series: [
-      { label: "Time" },
+      {}, // x-axis
       ...Array.from({ length: NUM_SERIES }, (_, i) => ({
         label: `Y${i + 1}`,
+        stroke: uPlot.assign({}, getColor(i)), // ensure lines are visible
+        show: true
       }))
     ],
+
   }
 
   uplot = new uPlot(opts, [
