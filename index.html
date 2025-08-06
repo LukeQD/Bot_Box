@@ -1,0 +1,46 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Vue Stress-Test Parent</title>
+  <!-- Vue 3 UMD build -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 1rem; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    iframe { border: 1px solid #ccc; width: 100%; height: 250px; }
+    button { padding: 0.5rem 1rem; font-size: 1rem; }
+  </style>
+</head>
+<body>
+  <button @click="addGraph">Add Graph</button>
+  <div class="grid">
+    <iframe
+      v-for="src in frames"
+      :key="src"
+      :src="src"
+    ></iframe>
+  </div>
+
+  <script>
+  const { createApp, ref } = Vue;
+
+  createApp({
+    setup() {
+      const frames = ref([]);           // Array of iframe URLs
+      function addGraph() {
+        const url = `graph.html?ts=${Date.now()}`;
+        frames.value.push(url);
+      }
+      return { frames, addGraph };
+    }
+  }).mount('body');
+  </script>
+</body>
+</html>
